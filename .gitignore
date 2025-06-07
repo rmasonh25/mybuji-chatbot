@@ -36,7 +36,7 @@ pnpm-debug.log*
 
 # Local environment variables
 .env.local
-.env.*.local
+
 
 # TypeScript cache
 *.tsbuildinfo
