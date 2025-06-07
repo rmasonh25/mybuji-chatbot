@@ -14,9 +14,6 @@ interface ChatInterfaceProps {
   onClose: () => void;
 }
 
-// IMPORTANT: Replace this with your actual n8n webhook URL
-const HARDCODED_WEBHOOK_URL = "https://myauto.mybuji.io/webhook/45553f1e-1027-4272-b4c6-970c4e57f59d/chat";
-
 export default function ChatInterface({ onClose }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -61,7 +58,7 @@ export default function ChatInterface({ onClose }: ChatInterfaceProps) {
     setInputValue('');
     setIsLoading(true);
 
-    const webhookUrl = HARDCODED_WEBHOOK_URL;
+    const webhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
 
     if (!webhookUrl || webhookUrl === "YOUR_N8N_WEBHOOK_URL_HERE") {
       addMessage({
@@ -94,7 +91,7 @@ export default function ChatInterface({ onClose }: ChatInterfaceProps) {
         return;
       }
 
-      const responseBodyText = await response.text(); // Read body as text first
+      const responseBodyText = await response.text(); 
 
       if (!response.ok) {
         let errorText = `Error communicating with the bot. Status: ${response.status}`;
@@ -120,11 +117,10 @@ export default function ChatInterface({ onClose }: ChatInterfaceProps) {
         return;
       }
       
-      // At this point, response.ok is true
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         try {
-          const data = JSON.parse(responseBodyText); // Parse the text we already read
+          const data = JSON.parse(responseBodyText); 
           const botReplies = Array.isArray(data) ? data : (data.text ? [{text: data.text}] : (data.response ? [{text: data.response}] : []));
           
           if (botReplies.length > 0) {
@@ -153,9 +149,9 @@ export default function ChatInterface({ onClose }: ChatInterfaceProps) {
         } catch (jsonError: any) {
           addMessage({ id: Date.now().toString() + '-json-error', text: `Failed to parse bot's JSON response: ${jsonError.message.substring(0,100)}. Response text: ${responseBodyText.substring(0,100)}`, sender: 'bot', timestamp: new Date() });
         }
-      } else if (responseBodyText) { // Handle non-JSON but non-empty text response
+      } else if (responseBodyText) { 
         addMessage({ id: Date.now().toString() + '-text-data', text: responseBodyText, sender: 'bot', timestamp: new Date() });
-      } else { // Handle empty non-JSON response (though 204 should catch most of these)
+      } else { 
         addMessage({ id: Date.now().toString() + '-empty-text', text: 'Received an empty, non-JSON response from the bot.', sender: 'bot', timestamp: new Date() });
       }
     } catch (error: any) {
@@ -265,3 +261,5 @@ export default function ChatInterface({ onClose }: ChatInterfaceProps) {
     </Card>
   );
 }
+
+    
