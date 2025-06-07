@@ -68,16 +68,31 @@ export default function ChatInterface({ isOpen, onClose }: ChatInterfaceProps) {
       });
 
       if (!response.ok) {
-        let errorDetails = `Webhook error: ${response.status} ${response.statusText}`;
-        try {
-          const errorText = await response.text();
-          if (errorText) {
-            errorDetails += ` - ${errorText}`;
-          }
-        } catch (textError) {
-          // Ignore if can't read error body
+        let errorMessageFromServer = `${response.status}`;
+        if (response.statusText) {
+            errorMessageFromServer += ` ${response.statusText}`;
         }
-        throw new Error(errorDetails);
+
+        try {
+          const errorBodyText = await response.text();
+          if (errorBodyText) {
+            try {
+              const parsedError = JSON.parse(errorBodyText);
+              if (parsedError && typeof parsedError.message === 'string') {
+                errorMessageFromServer += `: ${parsedError.message}`;
+              } else {
+                const truncatedErrorBody = errorBodyText.substring(0, 200) + (errorBodyText.length > 200 ? '...' : '');
+                errorMessageFromServer += ` - ${truncatedErrorBody}`;
+              }
+            } catch (jsonParseError) {
+              const truncatedErrorBody = errorBodyText.substring(0, 200) + (errorBodyText.length > 200 ? '...' : '');
+              errorMessageFromServer += ` - ${truncatedErrorBody}`;
+            }
+          }
+        } catch (readTextError) {
+          console.error("Could not read error response body:", readTextError);
+        }
+        throw new Error(`Webhook request failed: ${errorMessageFromServer}`);
       }
 
       let botReplies: string[] = [];
@@ -131,11 +146,13 @@ export default function ChatInterface({ isOpen, onClose }: ChatInterfaceProps) {
     } catch (error: any) {
       console.error("Failed to send message:", error);
       let friendlyErrorMessage = "Sorry, I couldn't connect to the support bot or encountered an issue. Please try again later.";
-      if (error instanceof Error && error.message.startsWith("Webhook error:")) {
-         // More specific error from our check
-        friendlyErrorMessage = `Error communicating with the bot: ${error.message.replace("Webhook error: ", "")}`;
-      } else if (error instanceof Error && error.message.toLowerCase().includes("failed to fetch")) {
-        friendlyErrorMessage = "Network error: Could not reach the chat service. Please check your internet connection.";
+      
+      if (error instanceof Error) {
+        if (error.message.startsWith("Webhook request failed:")) {
+          friendlyErrorMessage = `Error from bot service: ${error.message.replace("Webhook request failed: ", "")}`;
+        } else if (error.message.toLowerCase().includes("failed to fetch")) {
+          friendlyErrorMessage = "Network error: Could not reach the chat service. Please check your internet connection.";
+        }
       }
 
       const errorMessage: Message = {
