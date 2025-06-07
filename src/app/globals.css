@@ -51,36 +51,6 @@ body {
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 210 20% 78%;
     --sidebar-ring: 283 44% 47%;
-
-    /* n8n Chat Customization */
-    --chat--color-primary: hsl(var(--accent)); /* Main interactive elements, like toggle button, send button */
-    --chat--color-primary-shade-50: hsl(var(--accent)); 
-    --chat--color-primary-shade-100: hsl(var(--accent));
-    
-    --chat--color-secondary: hsl(var(--primary)); /* Used for user messages by default if not overridden */
-    
-    --chat--color-white: hsl(var(--primary-foreground));
-    --chat--color-light: hsl(var(--background));
-    --chat--color-light-shade-50: hsl(var(--background));
-    --chat--color-light-shade-100: hsl(var(--border)); 
-    --chat--color-medium: hsl(var(--border));
-    --chat--color-dark: hsl(var(--primary)); 
-    --chat--color-disabled: hsl(var(--muted-foreground));
-    --chat--color-typing: hsl(var(--foreground));
-
-    --chat--header--background: hsl(var(--primary));
-    --chat--header--color: hsl(var(--primary-foreground));
-    
-    --chat--message--bot--background: hsl(var(--muted));
-    --chat--message--bot--color: hsl(var(--muted-foreground));
-    
-    --chat--message--user--background: hsl(var(--accent));
-    --chat--message--user--color: hsl(var(--accent-foreground));
-
-    --chat--toggle--background: hsl(var(--accent));
-    --chat--toggle--hover--background: hsl(var(--accent)); 
-    --chat--toggle--active--background: hsl(var(--accent));
-    --chat--toggle--color: hsl(var(--accent-foreground));
   }
 
   .dark {
@@ -121,26 +91,6 @@ body {
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 210 20% 25%;
     --sidebar-ring: 283 44% 55%;
-
-     /* n8n Chat Dark Theme Customization */
-    --chat--color-primary: hsl(var(--accent)); 
-    --chat--color-secondary: hsl(var(--primary));
-    --chat--color-white: hsl(var(--foreground)); 
-    --chat--color-light: hsl(var(--background));
-    --chat--color-medium: hsl(var(--border));
-    --chat--color-dark: hsl(var(--card)); 
-    
-    --chat--header--background: hsl(var(--primary));
-    --chat--header--color: hsl(var(--primary-foreground));
-    
-    --chat--message--bot--background: hsl(var(--muted));
-    --chat--message--bot--color: hsl(var(--muted-foreground));
-    
-    --chat--message--user--background: hsl(var(--accent));
-    --chat--message--user--color: hsl(var(--accent-foreground));
-
-    --chat--toggle--background: hsl(var(--accent));
-    --chat--toggle--color: hsl(var(--accent-foreground));
   }
 }
 
