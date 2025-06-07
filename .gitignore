@@ -4,13 +4,18 @@
 /node_modules
 /.pnp
 .pnp.js
+yarn.lock
+package-lock.json
 
 # Testing
 /coverage
 
 # Next.js build output
-/.next/
-/out/
+/.next
+/out
+
+# Minified/Transpiled files (if not in /out)
+# /dist
 
 # Production
 /build
@@ -18,46 +23,33 @@
 # Misc
 .DS_Store
 *.pem
-
-# Logs
-logs
 *.log
+
+# Log files
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
+firebase-debug.log
 
-# Diagnostic reports (https://nodejs.org/api/report.html)
-report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
-
-# System files
-.AppleDouble
-Thumbs.db
-
-# Env files
+# Environment Variables
 .env
 .env*.local
-.env.development.local
-.env.test.local
-.env.production.local
 !.env.example
-!.env.example.local
-
-# Temp files
-*.swp
-*~
-*.tmp
+!.env.sample
 
 # Editor directories and files
 .idea
 .vscode/*
 !.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
 !.vscode/extensions.json
 *.sublime-workspace
 
+# Optional eslint cache
+.eslintcache
+
+# Optional Prettier cache
+.prettiercache
+
 # Firebase
-.firebase
-firebase-debug.log
+firebase-crashlytics-build.json
