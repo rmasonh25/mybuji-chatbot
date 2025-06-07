@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Message } from "@/lib/types";
@@ -33,7 +34,19 @@ export default function ChatInterface({ isOpen, onClose }: ChatInterfaceProps) {
 
   const handleSendMessage = async (e: FormEvent) => {
     e.preventDefault();
-    if (!inputValue.trim() || !webhookUrl) return;
+    if (!inputValue.trim() || !webhookUrl) {
+      if(!webhookUrl) {
+        console.error("Webhook URL is not configured.");
+        const errorMessage: Message = {
+          id: `${Date.now().toString()}-error`,
+          text: "Chat service is not configured. Please contact support.",
+          sender: "bot",
+          timestamp: new Date(),
+        };
+        setMessages((prevMessages) => [...prevMessages, errorMessage]);
+      }
+      return;
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -51,34 +64,59 @@ export default function ChatInterface({ isOpen, onClose }: ChatInterfaceProps) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ message: userMessage.text, userId: "guestUser" }), // N8N might expect userId
+        body: JSON.stringify({ message: userMessage.text, userId: "guestUser" }),
       });
 
       if (!response.ok) {
-        throw new Error(`Webhook error: ${response.statusText}`);
+        let errorDetails = `Webhook error: ${response.status} ${response.statusText}`;
+        try {
+          const errorText = await response.text();
+          if (errorText) {
+            errorDetails += ` - ${errorText}`;
+          }
+        } catch (textError) {
+          // Ignore if can't read error body
+        }
+        throw new Error(errorDetails);
       }
 
-      const data = await response.json();
-      // N8N webhook might return an array of messages, or a single message object.
-      // This example assumes a simple response like { response: "bot reply text" } or { text: "..." }
-      // Or it might be an array like [{ text: "Hi" }, { text: "How can I help?" }]
-      
       let botReplies: string[] = [];
-      if (Array.isArray(data)) {
-        data.forEach(item => {
-          if (item.text) botReplies.push(item.text);
-        });
-      } else if (data.response) {
-        botReplies.push(data.response);
-      } else if (data.text) {
-        botReplies.push(data.text);
-      } else {
-         // Fallback if structure is unknown, but we received a 200
-        botReplies.push("Received a response, but couldn't parse it.");
-      }
 
+      if (response.status === 204) {
+        // No content, successful response. Let fallback handle it.
+      } else {
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          try {
+            const data = await response.json();
+            if (Array.isArray(data)) {
+              data.forEach(item => {
+                if (item.text) botReplies.push(item.text);
+              });
+            } else if (data.response) {
+              botReplies.push(data.response);
+            } else if (data.text) {
+              botReplies.push(data.text);
+            } else {
+              botReplies.push("Received a response, but couldn't interpret it as expected.");
+            }
+          } catch (jsonError) {
+            console.error("Failed to parse JSON response:", jsonError);
+            botReplies.push("Sorry, the bot's response was not in a readable format.");
+          }
+        } else {
+          // Handle non-JSON responses
+          const textData = await response.text();
+          if (textData && textData.trim()) {
+            botReplies.push(textData.trim());
+          } else {
+            // Empty or whitespace-only text response, let fallback handle.
+          }
+        }
+      }
+      
       if (botReplies.length === 0) {
-        botReplies.push("I'm not sure how to respond to that.");
+        botReplies.push("I'm not sure how to respond to that right now.");
       }
       
       const botMessages: Message[] = botReplies.map((replyText, index) => ({
@@ -90,11 +128,19 @@ export default function ChatInterface({ isOpen, onClose }: ChatInterfaceProps) {
 
       setMessages((prevMessages) => [...prevMessages, ...botMessages]);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to send message:", error);
+      let friendlyErrorMessage = "Sorry, I couldn't connect to the support bot or encountered an issue. Please try again later.";
+      if (error instanceof Error && error.message.startsWith("Webhook error:")) {
+         // More specific error from our check
+        friendlyErrorMessage = `Error communicating with the bot: ${error.message.replace("Webhook error: ", "")}`;
+      } else if (error instanceof Error && error.message.toLowerCase().includes("failed to fetch")) {
+        friendlyErrorMessage = "Network error: Could not reach the chat service. Please check your internet connection.";
+      }
+
       const errorMessage: Message = {
         id: `${Date.now().toString()}-error`,
-        text: "Sorry, I couldn't connect to the support bot. Please try again later.",
+        text: friendlyErrorMessage,
         sender: "bot",
         timestamp: new Date(),
       };
@@ -115,7 +161,7 @@ export default function ChatInterface({ isOpen, onClose }: ChatInterfaceProps) {
             }
         ]);
     }
-  }, [isOpen]);
+  }, [isOpen, messages.length]);
 
 
   if (!isOpen) return null;
@@ -182,3 +228,4 @@ export default function ChatInterface({ isOpen, onClose }: ChatInterfaceProps) {
     </div>
   );
 }
+
