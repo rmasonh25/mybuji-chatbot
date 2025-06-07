@@ -15,7 +15,7 @@ interface ChatInterfaceProps {
 }
 
 // IMPORTANT: Replace this with your actual n8n webhook URL
-const HARDCODED_WEBHOOK_URL = "YOUR_N8N_WEBHOOK_URL_HERE";
+const HARDCODED_WEBHOOK_URL = "https://myauto.mybuji.io/webhook/45553f1e-1027-4272-b4c6-970c4e57f59d/chat";
 
 export default function ChatInterface({ onClose }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([
