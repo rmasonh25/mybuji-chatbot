@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
@@ -6,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { X, Send, Bot, User } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 
 interface ChatInterfaceProps {
@@ -76,7 +77,7 @@ export default function ChatInterface({ onClose }: ChatInterfaceProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ chatInput: trimmedInput, sessionId: 'cellochat-user-session' }), // Sending chatInput key
+        body: JSON.stringify({ chatInput: trimmedInput, sessionId: 'cellochat-user-session' }),
       });
 
       if (response.status === 204) {
@@ -92,24 +93,29 @@ export default function ChatInterface({ onClose }: ChatInterfaceProps) {
 
       if (!response.ok) {
         let errorText = `Error communicating with the bot. Status: ${response.status}`;
-        try {
-          const errorData = await response.json();
-          if (errorData && typeof errorData === 'object' && errorData.message) {
-            errorText = `Bot service error: ${errorData.message}`;
-          } else if (errorData) {
-            errorText = `Bot service error: ${JSON.stringify(errorData).substring(0, 150)}`;
-          } else {
-            const rawText = await response.text();
-            errorText = `Bot service error ${response.status}: ${rawText.substring(0, 150) || response.statusText}`;
-          }
-        } catch (e) {
+        const responseBodyText = await response.text(); // Read body as text first
+
+        if (responseBodyText) {
           try {
-            const rawText = await response.text();
-            errorText = `Bot service error ${response.status}: ${rawText.substring(0, 150) || response.statusText}`;
-          } catch (textErr) {
-            errorText = `Bot service error ${response.status}: ${response.statusText}. Unable to retrieve error details.`;
+            // Try to parse it as JSON
+            const errorData = JSON.parse(responseBodyText);
+            if (errorData && typeof errorData === 'object' && errorData.message) {
+              errorText = `Bot service error: ${errorData.message}`;
+            } else if (errorData) {
+              errorText = `Bot service error: ${JSON.stringify(errorData).substring(0, 150)}`;
+            } else {
+              // Not JSON or not the expected structure, use the raw text
+              errorText = `Bot service error ${response.status}: ${responseBodyText.substring(0, 150) || response.statusText}`;
+            }
+          } catch (jsonParseError) {
+            // Failed to parse as JSON, so it's likely plain text
+            errorText = `Bot service error ${response.status}: ${responseBodyText.substring(0, 150) || response.statusText}`;
           }
+        } else {
+          // No body text, just use statusText
+          errorText = `Bot service error ${response.status}: ${response.statusText}.`;
         }
+        
         addMessage({ id: Date.now().toString() + '-error', text: errorText, sender: 'bot', timestamp: new Date() });
         setIsLoading(false);
         return;
@@ -119,8 +125,6 @@ export default function ChatInterface({ onClose }: ChatInterfaceProps) {
       if (contentType && contentType.includes('application/json')) {
         try {
           const data = await response.json();
-          // n8n often returns an array, even if it's a single message.
-          // It might also return an object with a specific key like 'text' or 'response'.
           const botReplies = Array.isArray(data) ? data : (data.text ? [{text: data.text}] : (data.response ? [{text: data.response}] : []));
           
           if (botReplies.length > 0) {
@@ -132,7 +136,7 @@ export default function ChatInterface({ onClose }: ChatInterfaceProps) {
                   sender: 'bot',
                   timestamp: new Date(),
                 });
-              } else if (typeof reply === 'string') { // Sometimes n8n might just send back a string in the array
+              } else if (typeof reply === 'string') {
                  addMessage({
                   id: Date.now().toString() + `-bot-${index}`,
                   text: reply,
@@ -142,7 +146,6 @@ export default function ChatInterface({ onClose }: ChatInterfaceProps) {
               }
             });
           } else if (Object.keys(data).length > 0) {
-             // If it's an object but not structured as expected, try to show its content
              addMessage({ id: Date.now().toString() + '-raw', text: `Received: ${JSON.stringify(data).substring(0,200)}`, sender: 'bot', timestamp: new Date() });
           } else {
             addMessage({ id: Date.now().toString() + '-empty', text: "Bot gave an empty response.", sender: 'bot', timestamp: new Date() });
@@ -265,3 +268,5 @@ export default function ChatInterface({ onClose }: ChatInterfaceProps) {
     </Card>
   );
 }
+
+    
